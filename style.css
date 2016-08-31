@@ -4,6 +4,7 @@
 
 body {
     margin: 2em 0;
+    background: url(http://blog.diare.de/wp-content/uploads/P1040123.jpg) 0/cover no-repeat fixed;
     color: whitesmoke;
 }
 
@@ -22,15 +23,26 @@ form label {
 }
 
 form select {
+    -webkit-appearance: none;
+       -moz-appearance: none;
+            appearance: none;
     margin-left: 5px;
-    padding: 2px 5px 2px 2px;
-    border: 2px solid #ccc;
+    padding: 3px calc(8px + 26px) 3px 6px;  /* calc: 8px actual padding, 26px arrow area */
+    /* Icon made by 'Freepik' from www.flaticon.com is licensed by CC 3.0 BY */
+    /* http://www.flaticon.com/free-icon/down-arrow_266 */
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20.633 20.633"><path d="M10.79 15.617l9.648-9.646c.133-.13.195-.3.195-.472s-.062-.344-.195-.473l-.012-.012c-.125-.127-.295-.195-.472-.195h-4.682c-.18 0-.348.068-.473.195l-4.48 4.48-4.48-4.48c-.13-.127-.3-.195-.474-.195H.684c-.182 0-.35.068-.475.195l-.014.012C.068 5.148 0 5.322 0 5.498s.068.348.196.473l9.648 9.647c.264.263.686.263.946 0z" fill="#3e94ec"/></svg>') 0/16px no-repeat, linear-gradient(to left, hsl(215, 92%, 92%) 26px, transparent 26px);  /* 26px: 16px icon width, 5px space left & right */
+    background-color: rgb(248,248,248);
+    background-position: right 5px top 50%, 0;
+    border: 2px solid hsl(220, 15%, 78%);
     border-radius: 5px;
+    box-shadow: 0 2px 8px rgba(0,0,0, 0.3);
+    transition: all 150ms;
 }
 
 form select:hover {
-    border-color: #aab;
-    box-shadow: 0 2px 6px rgba(0,0,0, 0.15);
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20.633 20.633"><path d="M10.79 15.617l9.648-9.646c.133-.13.195-.3.195-.472s-.062-.344-.195-.473l-.012-.012c-.125-.127-.295-.195-.472-.195h-4.682c-.18 0-.348.068-.473.195l-4.48 4.48-4.48-4.48c-.13-.127-.3-.195-.474-.195H.684c-.182 0-.35.068-.475.195l-.014.012C.068 5.148 0 5.322 0 5.498s.068.348.196.473l9.648 9.647c.264.263.686.263.946 0z" fill="#006df0"/></svg>') 0/16px no-repeat, linear-gradient(to left, hsl(215, 100%, 92%) 26px, transparent 26px);
+    background-color: #fff;
+    background-position: right 5px top 50%, 0;
 }
 
 
@@ -71,7 +83,7 @@ table.bank-statement {
  */
 
 body {
-    background-color: #3e94ec;
+    /*background-color: #3e94ec;*/
     font-family: "Roboto", helvetica, arial, sans-serif;
     /*text-rendering: optimizeLegibility;*/
 }
@@ -87,11 +99,11 @@ table {
 }
 
 caption {
-    padding: 0.5em 1em;
+    padding: 0.5em 1.1rem;  /* padding-right: same as td, 1.1rem; */
     font-size: 1.2em;
     font-weight: 500;
     text-align: right;
-    text-shadow: 1px 0 2px rgba(0, 0, 0, 0.6);
+    text-shadow: 0px 0 12px rgba(0, 0, 0, 0.75), 1px 0 2px rgba(0,0,0, 0.5);
 }
 
 th {
@@ -169,9 +181,10 @@ tr:last-child td:last-child {
 
 td {
     background: #FFFFFF;
-    padding: 1em;
+    padding: 0.95em 1.1rem;
     font-weight: 300;
     font-size: 1.1em;
+    line-height: 1.2em;
     text-shadow: -1px -1px 1px rgba(0, 0, 0, 0.1);
     border-right: 1px solid #C1C3D1;
     transition: padding 0.4s, background 0.4s;
