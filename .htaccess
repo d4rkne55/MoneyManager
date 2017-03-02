@@ -1,0 +1,22 @@
+RewriteEngine on
+
+# don't rewrite URLs that point to existing files
+# else the assets won't be available, as it redirects everything to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+
+RewriteRule ^(.*)$ index.php
+
+
+# caching
+<IfModule mod_expires.c>
+  ExpiresActive on
+
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType image/png "access plus 1 month"
+  ExpiresByType image/jpg "access plus 1 month"
+
+  <FilesMatch "(favicon\.png|normalize(\.min)?\.css)$">
+    ExpiresDefault "access plus 1 year"
+  </FilesMatch>
+</IfModule>
