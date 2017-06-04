@@ -165,8 +165,9 @@ tr[contenteditable].inactive {
 }
 
 tr[contenteditable].inactive td {
-    padding: 4px 1em;
+    padding-top: 8px;
     background: #C1C3D1;
+    font-size: 0;
 }
 
 tr:last-child td:first-child {
