@@ -1,0 +1,34 @@
+# setting database to null (~) prevents the automatic connection to the database
+db_connection:
+    host: localhost
+    user: root
+    pass: ~
+    database: money_manager
+
+routing:
+    # This array consists of paths, with named variables in the form ($variable),
+    # and of the corresponding methods to be called when the path matches.
+    #
+    # Paths are handled case-insensitive
+    # The handlers are defined like in PHP code, classes of non-static methods get instantiated automatically
+    routes:
+        -
+            pattern: ''
+            handler: MoneyManager->showTransfers
+        -
+            pattern: '($id)'
+            handler: MoneyManager->showTransfers
+        -
+            pattern: '($id)/($dateRange)'
+            handler: MoneyManager->showTransfers
+        -
+            pattern: 'add'
+            handler: MoneyManager->addTransfer
+
+    # This array defines the regex to be matched for the variables in the route
+    # Slashes will get escaped, don't do that manually
+    #
+    # Specifying conditions for the variables is optional,
+    # by default variables match everything except slashes ([^/]+)
+    conditions:
+        id: '\d+'

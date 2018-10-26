@@ -3,83 +3,68 @@
 class Router
 {
     /**
-     * This associative array consists of paths, with named variables in the form ($variable),
-     * and of the corresponding methods to be called when the path matches.
-     * Paths are handled case-insensitive
+     * This holds the ConfigHelper object containing the parsed config file
      *
-     * Static methods need to be in the form 'Class::staticMethod' and methods needing the class to be instantiated
-     * need to be an array in the following form: array('Class', 'method')
-     *
-     * @var array $routes
+     * @var ConfigHelper $config
      */
-    private $routes = array(
-        '' => array(
-            MoneyManager::class, 'showTransfers'
-        ),
-        '($id)' => array(
-            MoneyManager::class, 'showTransfers'
-        ),
-        '($id)/($dateRange)' => array(
-            MoneyManager::class, 'showTransfers'
-        ),
-        'add' => array(
-            MoneyManager::class, 'addTransfer'
-        )
-    );
-
-    /**
-     * This array defines the regex to be matched for the variables in the route
-     * Slashes will get escaped, no need to do that manually
-     *
-     * @var array $varConditions
-     */
-    private $varConditions = array(
-        'id'        => '\d+',
-        'dateRange' => '.*'
-    );
+    private $config;
 
 
     public function __construct() {
-        // get path relative to the project URL path
-        $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-        $relativePath = str_replace(ROOT, '', $path);
+        $this->config = new ConfigHelper('config.yml');
 
-        foreach ($this->routes as $route => $fnc) {
-            $routeRegex = $this->buildRegexForRoute($route);
+        // get path relative to the project URL path
+        $relativePath = str_replace(ROOT, '', $_SERVER['REQUEST_URI']);
+
+        $routes = $this->config->get('routing:routes');
+
+        if ($routes == null) {
+            throw new Exception('Router: There are no routes defined in the config.yml!');
+        }
+
+        $routeFound = false;
+
+        foreach ($routes as $route) {
+            $routeRegex = $this->buildRegexForRoute($route['pattern']);
 
             if (preg_match("/$routeRegex/i", $relativePath, $matches)) {
-                // remove full match (first element) from matches, not needed
-                array_shift($matches);
+                $routeFound = true;
 
-                // give matches/parameters a named index (using variable name from route)
-                $params = array();
-                $paramNames = array_keys($this->varConditions);
-                foreach ($paramNames as $i => $name) {
-                    $params[$name] = isset($matches[$i]) ? $matches[$i] : '';
-                }
-                // add POST data to the params array, if POST request
-                if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-                    foreach ($_POST as $var => $value) {
-                        $params[$var] = $value;
-                    }
-                }
+                $callable = $route['handler'];
 
                 // for non-static methods, create a class instance first
-                if (is_array($fnc)) {
-                    $class = new $fnc[0]();
-                    $fnc = array($class, $fnc[1]);
+                if (is_array($callable)) {
+                    $class = new $callable['class']();
+                    $callable = array($class, $callable['method']);
                 }
 
-                call_user_func($fnc, $params);
+                $params = $this->buildParameters($matches);
+
+                call_user_func($callable, $params);
                 break;
             }
         }
+
+        if (!$routeFound) {
+            http_response_code(404);
+        }
     }
 
+    /**
+     * Takes the route from the config and builds a regex for the route
+     *
+     * @param string $route
+     * @return string
+     */
     private function buildRegexForRoute($route) {
+        $varConditions = $this->config->get('routing:conditions');
+
         // replace variables with corresponding regex, including parentheses for matching
-        $route = preg_replace_callback('/\(\$(\w+)\)/', function($matches) {
-            return '(' . $this->varConditions[ $matches[1] ] . ')';
+        $route = preg_replace_callback('/\(\$(\w+)\)/', function($matches) use ($varConditions) {
+            $var = $matches[1];
+            $condition = isset($varConditions[$var]) ? $varConditions[$var] : '[^/]+';
+
+            return "(?<$var>$condition)";
         }, $route);
 
         // escape slashes
@@ -89,5 +74,34 @@ class Router
         $route = '^' . $route . '\/?$';
 
         return $route;
+    }
+
+    /**
+     * Returns an associative array with the matched route variables/conditions and POST values
+     *
+     * @param array $matches
+     * @return array
+     */
+    private function buildParameters($matches) {
+        // remove full match (first element) from matches, not needed
+        array_shift($matches);
+
+        $params = array();
+
+        foreach ($matches as $var => $match) {
+            // ignore numbered indexes from matches
+            if (!is_numeric($var)) {
+                $params[$var] = $match;
+            }
+        }
+
+        // add POST data to the params array, if POST request
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            foreach ($_POST as $var => $value) {
+                $params[$var] = $value;
+            }
+        }
+
+        return $params;
     }
 }

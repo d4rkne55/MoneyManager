@@ -5,23 +5,32 @@
  */
 class Base
 {
+    /**
+     * This holds the ConfigHelper object containing the parsed config file
+     *
+     * @var ConfigHelper $config
+     */
+    public $config;
+
     /** @var View $view */
     public $view;
 
     /** @var PDO $DB */
     public $DB;
 
-    private $dbHost = 'localhost';
-    private $dbUser = 'root';
-    private $dbPass = '';
-    private $dbName = 'money_manager';
-
 
     public function __construct() {
+        $this->config = new ConfigHelper('config.yml');
+
         $this->view = new View();
 
-        $this->DB = new PDO("mysql:host=$this->dbHost;dbname=$this->dbName;charset=utf8", $this->dbUser, $this->dbPass, array(
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-        ));
+        // typecast array to an object for cleaner access inside string
+        $conn = (object) $this->config->get('db_connection');
+
+        if ($conn->database) {
+            $this->DB = new PDO("mysql:host=$conn->host;dbname=$conn->database;charset=utf8", $conn->user, $conn->pass, array(
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+            ));
+        }
     }
 }

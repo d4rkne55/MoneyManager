@@ -3,40 +3,58 @@
 class Request
 {
     private $url = array();
-    private $query = '';
+    private $queryString = '';
     private $currentVar;
 
+    private static $defaultPorts = array(
+        'http' => 80,
+        'https' => 443
+    );
 
-    public function __construct($url) {
+
+    public function __construct($url = null) {
+        // use current URL if nothing passed
+        if (!$url) {
+            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') ? 'https' : 'http';
+            $url = "$protocol://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+        }
+
         $defaults = array(
-            'protocol' => '',
-            'port' => 80,
+            'scheme' => 'http',
             'path' => '/'
         );
-        $url = parse_url($url);
+        $url = array_merge($defaults, parse_url($url));
 
-        if (isset($url['scheme'])) {
-            $url['protocol'] = $url['scheme'];
-            unset($url['scheme']);
+        $url['protocol'] = $url['scheme'];
+
+        if (!isset($url['host']))  {
+            $url['host'] = $url['path'];
+            $url['path'] = $defaults['path'];
+        }
+        $url['domain'] = $url['host'];
+
+        if (!isset($url['port']) && isset(self::$defaultPorts[ $url['protocol'] ])) {
+            $url['port'] = self::$defaultPorts[ $url['protocol'] ];
         }
 
         if (isset($url['query'])) {
-            $this->query = $url['query'];
+            $this->queryString = $url['query'];
 
             $query = array();
             foreach (explode('&', $url['query']) as $param) {
                 if (strpos($param, '=') !== false) {
                     $param = explode('=', $param);
-                    $query[ $param[0] ] = $param[1];
+                    $query[ $param[0] ] = urldecode($param[1]);
                 } else {
                     $query[$param] = '';
                 }
             }
 
             $url['query'] = $query;
+        } else {
+            $url['query'] = array();
         }
 
-        $url = array_merge($defaults, $url);
         $this->url = $url;
     }
 
@@ -48,29 +66,69 @@ class Request
         }
     }
 
+    /**
+     * Returns the URL without query parameters or fragments
+     *
+     * @return string
+     */
+    public function getBaseUrl() {
+        $url = $this->url['protocol'] . '://';
+        $url .= $this->url['domain'];
+
+        if (isset($this->url['port'])) {
+            $port = $this->url['port'];
+
+            if ($port != self::$defaultPorts[ $this->url['protocol'] ]) {
+                $url .= ":$port";
+            }
+        }
+
+        $url .= $this->url['path'];
+
+        return $url;
+    }
+
+    /**
+     * Returns the query string, unmodified
+     *
+     * @return string
+     */
     public function getFullQuery() {
-        return empty($this->query) ? '' : '?' . $this->query;
+        return empty($this->queryString) ? '' : '?' . $this->queryString;
     }
 
+    /**
+     * @param string $key
+     * @return bool
+     */
     public function has($key) {
-        return (is_array($this->currentVar) && array_key_exists($key, $this->currentVar));
-    }
+        $current = ($this->currentVar === null) ? $this->url : $this->currentVar;
+        $this->currentVar = null;
 
-    public function dump() {
-        return $this->url;
+        return (is_array($current) && array_key_exists($key, $current));
     }
 
     public function __get($var) {
-        $current = $this->currentVar;
-        if (isset($current[$var]) && !is_array($current[$var])) {
-            $var = $current[$var];
-            $this->currentVar = null;
-
-            return $var;
-        } else {
-            $this->currentVar = $this->url[$var];
-
-            return $this;
+        if ($this->currentVar === null) {
+            $this->currentVar = $this->url;
         }
+
+        $current = $this->currentVar;
+
+        if (isset($current[$var])) {
+            if (is_array($current[$var])) {
+                $this->currentVar = $current[$var];
+
+                return $this;
+            } else {
+                $this->currentVar = null;
+
+                return $current[$var];
+            }
+        }
+
+        $this->currentVar = null;
+
+        return false;
     }
 }

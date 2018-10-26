@@ -10,9 +10,9 @@ class MoneyManager extends Base
      * @param array $query
      */
     public function showTransfers(array $query) {
-        $date = $query['dateRange'];
+        if (isset($query['dateRange'])) {
+            $date = $query['dateRange'];
 
-        if ($date) {
             // when exact range, eg. '02.01.2017--09.01.17'
             if (preg_match('/^((\d{2,4})(\.(?2)){1,2})--(?1)$/', $date)) {
                 $date = $this->handleDate(explode('--', $date), 'Y-m-d');
@@ -29,14 +29,17 @@ class MoneyManager extends Base
         }
         // if no date is set, show all until today
         else {
-            $date = array(0, $this->handleDate($date, 'Y-m-d'));
+            $date = array(0, $this->handleDate('today', 'Y-m-d'));
         }
 
+        $accountId = 0;
         $accounts = $this->DB->query('SELECT AccountID, AccountOwner FROM accounts')->fetchAll();
         $balance = 0;
         $transfers = array();
 
-        if ($query['id'] > 0) {
+        if (isset($query['id']) && $query['id'] > 0) {
+            $accountId = $query['id'];
+
             $stmt = $this->DB->prepare('SELECT * FROM transfers WHERE AccountID = ?  AND `Date` >= ? AND `Date` <= ? ORDER BY `Date` DESC, ID DESC');
             $stmt->execute(array($query['id'], $date[0], $date[1]));
             $transfers = $stmt->fetchAll();
@@ -46,7 +49,7 @@ class MoneyManager extends Base
         }
 
         $this->view->render('index.php', array(
-            'id' => $query['id'],
+            'id' => $accountId,
             'accounts' => $accounts,
             'balance' => $balance,
             'transfers' => $transfers,
